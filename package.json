@@ -4,7 +4,7 @@
   "description": "IRCGram is a IRC <-> Telegram Bridge",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "echo \"Error: no test specified\" && exit 0",
     "build": "babel src/ -d build --copy-files",
     "start" : "cd build/ && node index.js",
     "info" : "cd build/ && node info.js"
