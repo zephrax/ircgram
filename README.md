@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/zephrax/ircgram.svg?branch=master)](https://travis-ci.org/zephrax/ircgram)
+
 A complexly simple [Telegram](https://telegram.org/) ↔ IRC gateway.
 
 * Official IRC channel: [#kernelpanic @ irc.kernelpanic.com.ar](https://kernelpanic.com.ar/chat/)
