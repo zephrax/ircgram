@@ -4,7 +4,7 @@
   "description": "IRCGram is a IRC <-> Telegram Bridge",
   "main": "index.js",
   "scripts": {
-    "test": "mocha --compilers js:babel-core/register",
+    "test": "mocha --compilers js:babel-register",
     "build": "babel src/ -d build --copy-files",
     "start": "cd build/ && node index.js",
     "info": "cd build/ && node info.js"
