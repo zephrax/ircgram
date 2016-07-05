@@ -2,8 +2,6 @@
 /* jshint esversion: 6, node: true */
 
 import fs from 'fs';
-import TelegramBot from 'node-telegram-bot-api';
-import irc from 'irc';
 import User from './user';
 
 const _DEBUG_ = process.env.DEBUG || false;
@@ -11,25 +9,27 @@ const _DEBUG_ = process.env.DEBUG || false;
 class Bridge {
 
   constructor(options) {
-    this.options = options;
+    this.config = options.config;
     this.ircConnections = {};
     this.registeredCount = 0;
     this.usersCount = 0;
     this.irc2tgUserMapping = {};
     this.ircOwnUsernames = [];
 
-    this.tgBot = new TelegramBot(options.telegram.token, {polling: true});
+    //this.tgBot = new TelegramBot(options.telegram.token, {polling: true});
+    this.tgBot = options.tgBot;
+    this.ircLib = options.ircLib;
 
     this.setupMasterIRCUser();
     this.bindEvents();
   }
 
   setupMasterIRCUser() {
-    let masterUserClient = new irc.Client(this.options.irc.server, this.options.irc.master_nick, {
-      port: this.options.irc.port,
-      secure : this.options.irc.ssl,
+    const masterUserClient = new this.ircLib.Client(this.config.irc.server, this.config.irc.master_nick, {
+      port: this.config.irc.port,
+      secure : this.config.irc.ssl,
       autoConnect: true,
-      channels: [ this.options.irc.channel ],
+      channels: [ this.config.irc.channel ],
     });
 
     masterUserClient.addListener('message', ( (masterUserClient) => {
@@ -42,7 +42,7 @@ class Bridge {
             console.log(from);
           }
 
-          if (to === this.options.irc.channel && this.ircOwnUsernames.indexOf(from) === -1) {
+          if (to === this.config.irc.channel && this.ircOwnUsernames.indexOf(from) === -1) {
             let userNames = Object.keys(this.irc2tgUserMapping);
             for (let i=0;i<userNames.length;i++) {
               if (message.match(userNames[i])) {
@@ -50,14 +50,14 @@ class Bridge {
               }
             }
 
-            this.tgBot.sendMessage(this.options.telegram.group_id, `[IRC/${from}] ${message}`);
+            this.tgBot.sendMessage(this.config.telegram.group_id, `[IRC/${from}] ${message}`);
           }
         };
     })(masterUserClient));
 
     masterUserClient.addListener('registered', (data) => {
-      let nick = data.args[0];
-      this.options.irc.master_nick = nick;
+      const nick = data.args[0];
+      this.config.irc.master_nick = nick;
     });
 
     masterUserClient.addListener('error', (message) => {
@@ -77,11 +77,14 @@ class Bridge {
       console.log('-- ADD USER --');
     }
 
-    let thisUserClient = new irc.Client(this.options.irc.server, user.irc_nick, {
-      port: this.options.irc.port,
-      secure : this.options.irc.ssl,
+    let userNick = this.config.irc.nick_prefix ? this.config.irc.nick_prefix : '';
+    userNick += user.irc_nick + (this.config.irc.nick_suffix ? this.config.irc.nick_suffix : '');
+
+    let thisUserClient = new this.ircLib.Client(this.config.irc.server, userNick, {
+      port: this.config.irc.port,
+      secure : this.config.irc.ssl,
       autoConnect: false,
-      channels: [ this.options.irc.channel ],
+      channels: [ this.config.irc.channel ],
     });
 
     thisUserClient.addListener('registered', ((data) => {
@@ -90,7 +93,7 @@ class Bridge {
         user.real_irc_nick = nick;
         this.irc2tgUserMapping[nick] = user;
 
-        this.ircOwnUsernames = [ this.options.irc.master_nick ].concat(Object.keys(this.irc2tgUserMapping));
+        this.ircOwnUsernames = [ this.config.irc.master_nick ].concat(Object.keys(this.irc2tgUserMapping));
 
         if (++this.registeredCount === this.usersCount) {
           this.updateUsersDb();
@@ -105,6 +108,7 @@ class Bridge {
     });
 
     this.ircConnections[userData.id] = thisUserClient;
+    thisUserClient.connect();
   }
 
   removeUser(userId) {
@@ -112,15 +116,14 @@ class Bridge {
     delete this.ircConnections[userId];
   }
 
-  start() {
-    Object.keys(this.ircConnections).map((userId) => {
-      this.ircConnections[userId].connect();
-    });
-  }
-
   bindEvents() {
     this.tgBot.on('message', (msg) => {
       let chatId = msg.chat.id;
+
+      if (chatId != this.config.telegram.group_id) {
+        return;
+      }
+
       if (_DEBUG_) {
         console.log(msg);
       }
@@ -130,13 +133,18 @@ class Bridge {
       }
 
       if (this.ircConnections[msg.from.id]) {
-        this.ircConnections[msg.from.id].say(this.options.irc.channel, msg.text);
+        this.ircConnections[msg.from.id].say(this.config.irc.channel, msg.text);
       }
     });
 
     this.tgBot.on('new_chat_participant', (msg) => {
       if (_DEBUG_) {
         console.log(msg);
+      }
+
+      let chatId = msg.chat.id;
+      if (chatId != this.config.telegram.group_id) {
+        return;
       }
 
       if (!this.ircConnections[msg.new_chat_participant.id]) {
@@ -149,6 +157,11 @@ class Bridge {
     this.tgBot.on('left_chat_participant', (msg) => {
       if (_DEBUG_) {
         console.log(msg);
+      }
+
+      let chatId = msg.chat.id;
+      if (chatId != this.config.telegram.group_id) {
+        return;
       }
 
       if (this.ircConnections[msg.left_chat_participant.id]) {
@@ -167,7 +180,7 @@ class Bridge {
       };
     });
 
-    fs.writeFile(this.options.users_db, JSON.stringify(result, null, 2), (wrErr) => {
+    fs.writeFile(this.config.users_db, JSON.stringify(result, null, 2), (wrErr) => {
       if (_DEBUG_) {
         console.log(wrErr);
       }

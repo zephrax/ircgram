@@ -4,27 +4,52 @@
 import config from './config';
 import fs from 'fs';
 import Bridge from './libs/bridge';
+import TelegramBot from 'node-telegram-bot-api';
+import irc from 'irc';
 
 const _DEBUG_ = process.env.DEBUG || false;
 
-var ircGramBridge = new Bridge(config);
+let bridges = [];
 
-fs.readFile(config.users_db, (err, data) => {
-  if (err) {
-    throw err;
-  }
+const tgBot = new TelegramBot(config.telegram.token, { polling : true });
 
-  try {
-    let users = JSON.parse(data);
+const bridgeTasks = config.bridges.map((bridge) => {
+  return new Promise((resolve, reject) => {
+      let options = {
+        config : bridge,
+        tgBot : tgBot,
+        ircLib : irc
+      };
 
-    users.forEach((user) => {
-      console.log(`Configuring ${user.username}...`);
+      let ircGramBridge = new Bridge(options);
 
-      ircGramBridge.addUser(user);
+      fs.readFile(bridge.users_db, (err, data) => {
+        if (err) {
+          data = [];
+        }
+
+        try {
+          let users = JSON.parse(data);
+
+          users.forEach((user) => {
+            console.log(`Configuring ${user.username}...`);
+
+            ircGramBridge.addUser(user);
+          });
+        } catch (e) {
+          reject(e);
+        }
+
+        bridges.push(ircGramBridge);
+
+        resolve();
+      });
     });
-  } catch (e) {
-    console.log('Error loading data from users.json, it will be fixed automatically when users chat.');
-  }
+});
 
-  ircGramBridge.start();
+Promise.all(bridgeTasks).then((values) => {
+  console.log('Bridges ready');
+}).catch((err) => {
+  console.log(err.stack);
+  process.exit(1);
 });
