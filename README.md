@@ -9,7 +9,7 @@ A complexly simple [Telegram](https://telegram.org/) ↔ IRC gateway.
 
 #### Features:
 
-* Supports single IRC channel ↔ Telegram group, with multiple users.
+* Supports multiple IRC channel ↔ Telegram group, with multiple users.
 * Telegram user -> irc user mapping (one connection per user joined to the group)
 
 
@@ -25,5 +25,5 @@ Make sure you've installed Node.js.
 3. Install dependencies `npm install`
 4. Clone the repository `git clone https://github.com/zephrax/ircgram.git`
 5. Run `npm build && npm run info` and invite the bot to the group, then you can grab the group_id
-6. Edit config `cd ircgram/ && $EDITOR src/config.js` configuring the token, group_id and IRC connection info.
+6. Copy `config.example.js` to `config.js` and edit it: `cd ircgram/ && cp src/config.example.js src/config.js && $EDITOR src/config.js` configuring the token and bridges info.
 7. Start service `npm run build && npm start`
