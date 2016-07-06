@@ -10,45 +10,49 @@ const _DEBUG_ = process.env.DEBUG || false;
 
 let bridges = [];
 
-const tgBot = new TelegramBot(config.telegram.token, { polling : true });
+const tgBot = new TelegramBot(config.telegram.token, {
+    polling: true
+});
 
 const bridgeTasks = config.bridges.map((bridge) => {
-  return new Promise((resolve, reject) => {
-      let options = {
-        config : bridge,
-        tgBot : tgBot,
-        ircLib : irc
-      };
+    return new Promise((resolve, reject) => {
+        let options = {
+            config: bridge,
+            tgBot: tgBot,
+            ircLib: irc
+        };
 
-      let ircGramBridge = new Bridge(options);
+        let ircGramBridge = new Bridge(options);
 
-      fs.readFile(bridge.users_db, (err, data) => {
-        if (err) {
-          data = [];
-        }
+        fs.readFile(bridge.users_db, (err, data) => {
+            if (err) {
+                data = [];
+            }
 
-        try {
-          let users = JSON.parse(data);
+            try {
+                let users = JSON.parse(data);
 
-          users.forEach((user) => {
-            console.log(`Configuring ${user.username}...`);
+                users.forEach((user) => {
+                    if (_DEBUG_) {
+                        console.log(`Configuring ${user.username}...`);
+                    }
 
-            ircGramBridge.addUser(user);
-          });
-        } catch (e) {
-          reject(e);
-        }
+                    ircGramBridge.addUser(user);
+                });
+            } catch (e) {
+                reject(e);
+            }
 
-        bridges.push(ircGramBridge);
+            bridges.push(ircGramBridge);
 
-        resolve();
-      });
+            resolve();
+        });
     });
 });
 
-Promise.all(bridgeTasks).then((values) => {
-  console.log('Bridges ready');
+Promise.all(bridgeTasks).then(() => {
+    console.log('Bridges ready');
 }).catch((err) => {
-  console.log(err.stack);
-  process.exit(1);
+    console.log(err.stack);
+    process.exit(1);
 });
