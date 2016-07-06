@@ -1,5 +1,4 @@
 'use strict';
-/* jshint esversion: 6, node: true */
 
 import config from './config';
 import TelegramBot from 'node-telegram-bot-api';

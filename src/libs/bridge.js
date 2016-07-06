@@ -1,5 +1,4 @@
 'use strict';
-/* jshint esversion: 6, node: true */
 
 import fs from 'fs';
 import User from './user';
@@ -13,6 +12,7 @@ class Bridge {
     this.ircConnections = {};
     this.registeredCount = 0;
     this.usersCount = 0;
+    this.masterUserClient = false;
     this.irc2tgUserMapping = {};
     this.ircOwnUsernames = [];
 
@@ -25,46 +25,46 @@ class Bridge {
   }
 
   setupMasterIRCUser() {
-    const masterUserClient = new this.ircLib.Client(this.config.irc.server, this.config.irc.master_nick, {
+    this.masterUserClient = new this.ircLib.Client(this.config.irc.server, this.config.irc.master_nick, {
       port: this.config.irc.port,
       secure : this.config.irc.ssl,
       autoConnect: true,
       channels: [ this.config.irc.channel ],
     });
 
-    masterUserClient.addListener('message', ( (masterUserClient) => {
-        return (from, to, message) => {
-          if (_DEBUG_) {
-            console.log(this.irc2tgUserMapping);
-            console.log(from + ' => ' + to + ': ' + message);
+    this.masterUserClient.addListener('message', (from, to, message) => {
+      if (_DEBUG_) {
+        console.log(this.irc2tgUserMapping);
+        console.log(from + ' => ' + to + ': ' + message);
 
-            console.log(this.ircOwnUsernames);
-            console.log(from);
+        console.log(this.ircOwnUsernames);
+        console.log(from);
+      }
+
+      if (to === this.config.irc.channel && this.ircOwnUsernames.indexOf(from) === -1) {
+        let userNames = Object.keys(this.irc2tgUserMapping);
+        for (let i=0;i<userNames.length;i++) {
+          if (message.match(userNames[i])) {
+            message = message.replace(userNames[i], (this.irc2tgUserMapping[userNames[i]].username ? '@' : '') + `${this.irc2tgUserMapping[userNames[i]].telegram_name}`);
           }
+        }
 
-          if (to === this.config.irc.channel && this.ircOwnUsernames.indexOf(from) === -1) {
-            let userNames = Object.keys(this.irc2tgUserMapping);
-            for (let i=0;i<userNames.length;i++) {
-              if (message.match(userNames[i])) {
-                message = message.replace(userNames[i], (this.irc2tgUserMapping[userNames[i]].username ? '@' : '') + `${this.irc2tgUserMapping[userNames[i]].telegram_name}`);
-              }
-            }
+        this.tgBot.sendMessage(this.config.telegram.group_id, `[IRC/${from}] ${message}`);
+      }
+    });
 
-            this.tgBot.sendMessage(this.config.telegram.group_id, `[IRC/${from}] ${message}`);
-          }
-        };
-    })(masterUserClient));
-
-    masterUserClient.addListener('registered', (data) => {
+    this.masterUserClient.addListener('registered', (data) => {
       const nick = data.args[0];
       this.config.irc.master_nick = nick;
     });
 
-    masterUserClient.addListener('error', (message) => {
+    this.masterUserClient.addListener('error', (message) => {
       if (_DEBUG_) {
         console.log('error: ', message);
       }
     });
+
+    this.ircOwnUsernames = [ this.config.irc.master_nick ];
   }
 
   addUser(userData) {

@@ -45,7 +45,7 @@ let config = {
     //     nick_prefix: '',
     //     nick_suffix: '_ig'
     //   }
-    }
+    // }
   ]
 };
 
