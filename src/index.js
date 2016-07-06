@@ -26,7 +26,7 @@ const bridgeTasks = config.bridges.map((bridge) => {
 
         fs.readFile(bridge.users_db, (err, data) => {
             if (err) {
-                data = [];
+                data = '[]';
             }
 
             try {
