@@ -68,6 +68,10 @@ class Bridge {
     }
 
     addUser(userData) {
+        if (this.config.telegram.ignore_users && this.config.telegram.ignore_users.indexOf(userData.id) > -1) {
+            return;
+        }
+
         let user = new User(userData);
         this.usersCount++;
 

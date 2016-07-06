@@ -14,7 +14,13 @@ let config = {
              * To get this ID invite the bot to a group and run: npm run info
              *   then write a text to the group and you will see the group_id in the console
              */
-            group_id: '_TELEGRAM_GROUP_ID_'
+            group_id: '_TELEGRAM_GROUP_ID_',
+
+            /**
+             * An array of telegram user ids. You can get the ID from the database file after some interactions
+             *  any user added here will be ignored and there won't be created the irc user
+             */
+            ignore_users: []
         },
         irc: {
             server: 'irc.kernelpanic.com.ar',
