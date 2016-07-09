@@ -27,11 +27,9 @@ class Client extends EventEmitter {
     }
 
     disconnect() {
-        return true;
     }
 
     say(target, text) {
-        this.emit('say_called', target, text);
     }
 
 }

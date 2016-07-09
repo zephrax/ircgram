@@ -14,10 +14,7 @@ class TelegramBot extends EventEmitter {
     }
 
     sendMessage(target, text) {
-        this.emit('sendmessage_called', target, text);
     }
-
-
 }
 
 export default TelegramBot;

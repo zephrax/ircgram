@@ -36,6 +36,8 @@
     "babel-register": "^6.9.0",
     "chai": "^3.5.0",
     "eslint": "^3.0.1",
-    "mocha": "^2.5.3"
+    "mocha": "^2.5.3",
+    "sinon": "^1.17.4",
+    "sinon-chai": "^2.8.0"
   }
 }

@@ -3,6 +3,8 @@
 import mocha from 'mocha';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
+import sinon from 'sinon';
+import sinonChai from 'sinon-chai';
 import {
     irc as mockIrc,
     TelegramBot as mockTelegramBot
@@ -11,6 +13,7 @@ import User from '../src/libs/user';
 import Bridge from '../src/libs/bridge';
 
 chai.use(chaiAsPromised);
+chai.use(sinonChai);
 chai.should();
 
 const configFile = {
@@ -31,7 +34,7 @@ const configFile = {
             channel: '#ircgram',
             master_nick: 'ircgram_master',
             nick_prefix: '',
-            nick_suffix: '_br'
+            nick_suffix: ''
         }
     }]
 };
@@ -84,20 +87,14 @@ describe('IRCGram Bridge', () => {
 
     it('should forward irc to telegram message', () => {
         const testMessage = 'Test forward message';
-        newBridge.tgBot.on('sendmessage_called', (target, msg) => {
-            msg.should.equal(`[IRC/test_irc_user] ${testMessage}`);
-            target.should.equal(testBridge.telegram.group_id);
-        });
-
+        let spy = sinon.spy(tgBot, 'sendMessage');
         newBridge.masterUserClient.emit('message', 'test_irc_user', testBridge.irc.channel, testMessage);
+        tgBot.sendMessage.should.have.been.calledWith(testBridge.telegram.group_id, `[IRC/test_irc_user] ${testMessage}`);
     });
 
     it('should forward telegram to irc message', () => {
         const testMessage = 'Test forward message';
-        newBridge.ircConnections[777].on('say_called', (target, msg) => {
-            msg.should.equal(testMessage);
-            target.should.equal(testBridge.irc.channel);
-        });
+        let spy = sinon.spy(newBridge.ircConnections[newUserMsg.new_chat_participant.id], 'say');
 
         newBridge.tgBot.emit('message', {
             chat: {
@@ -108,5 +105,7 @@ describe('IRCGram Bridge', () => {
             },
             text: testMessage
         });
+
+        newBridge.ircConnections[newUserMsg.new_chat_participant.id].say.should.have.been.calledWith(testBridge.irc.channel, testMessage);
     });
 });
