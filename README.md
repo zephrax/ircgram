@@ -1,7 +1,7 @@
 [![Build Status](https://travis-ci.org/zephrax/ircgram.svg?branch=master)](https://travis-ci.org/zephrax/ircgram)
 [![devDependency Status](https://david-dm.org/zephrax/ircgram/dev-status.svg)](https://david-dm.org/zephrax/ircgram#info=devDependencies)
 [![Dependency Status](https://david-dm.org/zephrax/ircgram.svg)](https://david-dm.org/zephrax/ircgram)
-
+[![Coverage Status](https://coveralls.io/repos/github/zephrax/ircgram/badge.svg?branch=master)](https://coveralls.io/github/zephrax/ircgram?branch=master)
 
 A complexly simple [Telegram](https://telegram.org/) ↔ IRC gateway.
 
