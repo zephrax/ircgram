@@ -44,4 +44,62 @@ describe('IRCGram User', () => {
         incompleteUser.should.have.property('telegram_name', 'John');
     });
 
+    it('should set properties correctly', () => {
+        fullUser.id = 3;
+        fullUser.first_name = "John2";
+        fullUser.last_name = "Doe2";
+        fullUser.username = "johndoe2";
+        fullUser.real_irc_nick = "john_doe2";
+
+        fullUser.should.have.property('id', 3);
+        fullUser.should.have.property('first_name', 'John2');
+        fullUser.should.have.property('last_name', 'Doe2');
+        fullUser.should.have.property('username', 'johndoe2');
+        fullUser.should.have.property('real_irc_nick', 'john_doe2');
+    });
+
+    it('should get irc nickname if has no username', () => {
+        fullUser.first_name = "John";
+        fullUser.last_name = "Doe";
+        fullUser.username = "";
+        fullUser.real_irc_nick = "";
+
+        fullUser.should.have.property('irc_nick', 'John_Doe');
+    });
+
+    it('should get irc nickname if has only first_name', () => {
+        fullUser.first_name = "John";
+        fullUser.last_name = "";
+        fullUser.username = "";
+        fullUser.real_irc_nick = "";
+
+        fullUser.should.have.property('irc_nick', 'John');
+    });
+
+    it('should get irc nickname if has only last_name', () => {
+        fullUser.first_name = "";
+        fullUser.last_name = "Doe";
+        fullUser.username = "";
+        fullUser.real_irc_nick = "";
+
+        fullUser.should.have.property('irc_nick', 'Doe');
+    });
+
+    it('should get telegram mention name if has only first_name', () => {
+        fullUser.first_name = "John";
+        fullUser.last_name = "";
+        fullUser.username = "";
+        fullUser.real_irc_nick = "";
+
+        fullUser.should.have.property('telegram_name', 'John');
+    });
+
+    it('should get telegram mention name if has only last_name', () => {
+        fullUser.first_name = "";
+        fullUser.last_name = "Doe";
+        fullUser.username = "";
+        fullUser.real_irc_nick = "";
+
+        fullUser.should.have.property('telegram_name', 'Doe');
+    });
 });

@@ -3,6 +3,7 @@
 import fs from 'fs';
 import User from './user';
 
+/* istanbul ignore next */
 const _DEBUG_ = process.env.DEBUG || false;
 
 class Bridge {
@@ -16,7 +17,6 @@ class Bridge {
         this.irc2tgUserMapping = {};
         this.ircOwnUsernames = [];
 
-        //this.tgBot = new TelegramBot(options.telegram.token, {polling: true});
         this.tgBot = options.tgBot;
         this.ircLib = options.ircLib;
 
@@ -33,6 +33,7 @@ class Bridge {
         });
 
         this.masterUserClient.addListener('message', (from, to, message) => {
+            /* istanbul ignore next */
             if (_DEBUG_) {
                 console.log(this.irc2tgUserMapping);
                 console.log(from + ' => ' + to + ': ' + message);
@@ -58,6 +59,7 @@ class Bridge {
             this.config.irc.master_nick = nick;
         });
 
+        /* istanbul ignore next */
         this.masterUserClient.addListener('error', (message) => {
             if (_DEBUG_) {
                 console.log('error: ', message);
@@ -69,12 +71,13 @@ class Bridge {
 
     addUser(userData) {
         if (this.config.telegram.ignore_users && this.config.telegram.ignore_users.indexOf(userData.id) > -1) {
-            return;
+            return false;
         }
 
         let user = new User(userData);
         this.usersCount++;
 
+        /* istanbul ignore next */
         if (_DEBUG_) {
             console.log('-- ADD USER --');
             console.log(user);
@@ -84,14 +87,14 @@ class Bridge {
         let userNick = this.config.irc.nick_prefix ? this.config.irc.nick_prefix : '';
         userNick += user.irc_nick + (this.config.irc.nick_suffix ? this.config.irc.nick_suffix : '');
 
-        let thisUserClient = new this.ircLib.Client(this.config.irc.server, userNick, {
+        this.ircConnections[userData.id] = new this.ircLib.Client(this.config.irc.server, userNick, {
             port: this.config.irc.port,
             secure: this.config.irc.ssl,
             autoConnect: false,
             channels: [this.config.irc.channel],
         });
 
-        thisUserClient.addListener('registered', ((user) => {
+        this.ircConnections[userData.id].addListener('registered', ((user) => {
             return (data) => {
                 let nick = data.args[0];
                 user.real_irc_nick = nick;
@@ -105,14 +108,15 @@ class Bridge {
             };
         })(user));
 
-        thisUserClient.addListener('error', (message) => {
+        /* istanbul ignore next */
+        this.ircConnections[userData.id].addListener('error', (message) => {
             if (_DEBUG_) {
                 console.log('error: ', message);
             }
         });
 
-        this.ircConnections[userData.id] = thisUserClient;
-        thisUserClient.connect();
+        //this.ircConnections[userData.id] = thisUserClient;
+        this.ircConnections[userData.id].connect();
     }
 
     removeUser(userId) {
@@ -124,16 +128,18 @@ class Bridge {
         this.tgBot.on('message', (msg) => {
             let chatId = msg.chat.id;
 
+            /* istanbul ignore next */
             if (chatId != this.config.telegram.group_id) {
-                return;
+                return false;
             }
 
+            /* istanbul ignore next */
             if (_DEBUG_) {
                 console.log(msg);
             }
 
             if (!this.ircConnections[msg.from.id]) {
-                this.addUser(new User(msg.from));
+                this.addUser(msg.from);
             }
 
             if (this.ircConnections[msg.from.id]) {
@@ -142,28 +148,32 @@ class Bridge {
         });
 
         this.tgBot.on('new_chat_participant', (msg) => {
+            /* istanbul ignore next */
             if (_DEBUG_) {
                 console.log(msg);
             }
 
             let chatId = msg.chat.id;
+            /* istanbul ignore next */
             if (chatId != this.config.telegram.group_id) {
                 return;
             }
 
             if (!this.ircConnections[msg.new_chat_participant.id]) {
-                this.addUser(new User(msg.new_chat_participant));
+                this.addUser(msg.new_chat_participant);
 
                 this.updateUsersDb();
             }
         });
 
         this.tgBot.on('left_chat_participant', (msg) => {
+            /* istanbul ignore next */
             if (_DEBUG_) {
                 console.log(msg);
             }
 
             let chatId = msg.chat.id;
+            /* istanbul ignore next */
             if (chatId != this.config.telegram.group_id) {
                 return;
             }
@@ -185,6 +195,7 @@ class Bridge {
         });
 
         fs.writeFile(this.config.users_db, JSON.stringify(result, null, 2), (wrErr) => {
+            /* istanbul ignore next */
             if (_DEBUG_) {
                 console.log(wrErr);
             }

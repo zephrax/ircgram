@@ -4,7 +4,8 @@
   "description": "IRCGram is a IRC <-> Telegram Bridge",
   "main": "index.js",
   "scripts": {
-    "test": "mocha --compilers js:babel-register",
+    "test": "./node_modules/.bin/babel-node ./node_modules/.bin/isparta cover ./node_modules/.bin/_mocha",
+    "coveralls" : "cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage",
     "build": "babel src/ -d build --copy-files",
     "start": "cd build/ && node index.js",
     "info": "cd build/ && node info.js"
@@ -35,8 +36,11 @@
     "babel-preset-stage-0": "^6.5.0",
     "babel-register": "^6.9.0",
     "chai": "^3.5.0",
+    "coveralls": "^2.11.9",
     "eslint": "^3.0.1",
+    "isparta": "^4.0.0",
     "mocha": "^2.5.3",
+    "mocha-lcov-reporter": "^1.2.0",
     "sinon": "^1.17.4",
     "sinon-chai": "^2.8.0"
   }

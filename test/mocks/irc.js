@@ -16,6 +16,10 @@ class Client extends EventEmitter {
         if (options.autoConnect === true) {
             this.connect();
         }
+
+        this.addListener('registered', (data) => {
+            this.nick = data.args[0];
+        });
     }
 
     connect() {
@@ -36,4 +40,4 @@ class Client extends EventEmitter {
 
 export default {
     Client
-}
+};

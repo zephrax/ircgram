@@ -44,7 +44,7 @@ class User {
     }
 
     get real_irc_nick() {
-        return this._real_nick;
+        return this._real_irc_nick;
     }
 
     set real_irc_nick(nick) {
