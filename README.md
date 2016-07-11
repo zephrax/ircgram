@@ -5,7 +5,7 @@
 
 A complexly simple [Telegram](https://telegram.org/) ↔ IRC gateway.
 
-* Official IRC channel: [#kernelpanic @ irc.kernelpanic.com.ar](https://kernelpanic.com.ar/chat/)
+* Official IRC channel: [#kernelpanic @ irc.kernelpanic.com.ar](http://kernelpanic.com.ar/chat/)
 
 #### Features:
 
