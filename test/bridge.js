@@ -71,229 +71,280 @@ describe('IRCGram Bridge', () => {
         newBridge.should.be.an.instanceOf(Bridge);
     });
 
-    it('should create a master irc connection', () => {
-        newBridge.masterUserClient.should.be.an.instanceOf(mockIrc.Client);
-    });
-
-    it('should register successfuly', () => {
-        const data = {
-            args: [ testBridge.irc.master_nick]
-        };
-
-        newBridge.masterUserClient.on('registered', (data) => {
-            data.args[0].should.equal(testBridge.irc.master_nick);
+    describe('#master irc connection', () => {
+        it('should create a master irc connection', () => {
+            newBridge.masterUserClient.should.be.an.instanceOf(mockIrc.Client);
         });
 
-        newBridge.masterUserClient.connect();
-    });
+        it('should register successfuly', () => {
+            const data = {
+                args: [ testBridge.irc.master_nick]
+            };
 
-    it('should handle an error', () => {
-        const data = {
-            error: 'Test'
-        };
+            newBridge.masterUserClient.on('registered', (data) => {
+                data.args[0].should.equal(testBridge.irc.master_nick);
+            });
 
-        newBridge.masterUserClient.on('error', (err) => {
-            err.should.equal(data);
+            newBridge.masterUserClient.connect();
         });
 
-        newBridge.masterUserClient.emit('error', data);
-    });
+        it('should handle an error', () => {
+            const data = {
+                error: 'Test'
+            };
 
-    it('should have the master irc connection configured nickname', () => {
-        newBridge.ircOwnUsernames.should.be.instanceOf(Array);
-        newBridge.ircOwnUsernames.should.include.members([testBridge.irc.master_nick]);
-    });
+            newBridge.masterUserClient.on('error', (err) => {
+                err.should.equal(data);
+            });
 
-    it('should add a recently joined telegram user', () => {
-        newBridge.tgBot.emit('new_chat_participant', newUserMsg);
-
-        newBridge.ircConnections.should.have.property(newUserMsg.new_chat_participant.id);
-    });
-
-    it('should add an active telegram user', () => {
-        const testMessage = 'Testing active user';
-        const theUser = {
-            id: 778,
-            username : 'newActiveUser',
-            first_name: 'NewActive',
-            last_name : 'User'
-        };
-
-        let spy = sinon.spy(newBridge, 'addUser');
-
-        newBridge.tgBot.emit('message', {
-            chat: {
-                id: testBridge.telegram.group_id
-            },
-            from: theUser,
-            text: testMessage
+            newBridge.masterUserClient.emit('error', data);
         });
 
-        newBridge.addUser.should.have.been.calledWith(theUser);
-        spy.restore();
+        it('should have the master irc connection configured nickname', () => {
+            newBridge.ircOwnUsernames.should.be.instanceOf(Array);
+            newBridge.ircOwnUsernames.should.include.members([testBridge.irc.master_nick]);
+        });
     });
 
-    it('should not add an active telegram user from non-mapped group', () => {
-        const testMessage = 'Testing active user';
-        const theUser = {
-            id: 779,
-            username : 'newActiveUser2',
-            first_name: 'NewActive2',
-            last_name : 'User2'
-        };
 
-        let dummyGroup = 112233;
+    describe('#users creation', () => {
+        it('should add a recently joined telegram user', () => {
+            newBridge.tgBot.emit('new_chat_participant', newUserMsg);
 
-        newBridge.tgBot.emit('message', {
-            chat: {
-                id: dummyGroup
-            },
-            from: theUser,
-            text: testMessage
+            newBridge.ircConnections.should.have.property(newUserMsg.new_chat_participant.id);
         });
 
-        newBridge.ircConnections.should.not.have.property(112233);
-    });
+        it('should add an active telegram user', () => {
+            const testMessage = 'Testing active user';
+            const theUser = {
+                id: 778,
+                username : 'newActiveUser',
+                first_name: 'NewActive',
+                last_name : 'User'
+            };
 
-    it('should forward irc to telegram message', () => {
-        const testMessage = 'Test forward message';
-        let spy = sinon.spy(tgBot, 'sendMessage');
-        newBridge.masterUserClient.emit('message', 'test_irc_user', testBridge.irc.channel, testMessage);
-        tgBot.sendMessage.should.have.been.calledWith(testBridge.telegram.group_id, `[IRC/test_irc_user] ${testMessage}`);
-        spy.restore();
-    });
+            let spy = sinon.spy(newBridge, 'addUser');
 
-    it('should forward telegram to irc message', () => {
-        const testMessage = 'Test forward message';
-        let spy = sinon.spy(newBridge.ircConnections[newUserMsg.new_chat_participant.id], 'say');
+            newBridge.tgBot.emit('message', {
+                chat: {
+                    id: testBridge.telegram.group_id
+                },
+                from: theUser,
+                text: testMessage
+            });
 
-        newBridge.tgBot.emit('message', {
-            chat: {
-                id: testBridge.telegram.group_id
-            },
-            from: {
-                id: 777
-            },
-            text: testMessage
+            newBridge.addUser.should.have.been.calledWith(theUser);
+            spy.restore();
         });
 
-        newBridge.ircConnections[newUserMsg.new_chat_participant.id].say.should.have.been.calledWith(testBridge.irc.channel, testMessage);
-        spy.restore();
-    });
+        it('should not add an active telegram user from non-mapped group', () => {
+            const testMessage = 'Testing active user';
+            const theUser = {
+                id: 779,
+                username : 'newActiveUser2',
+                first_name: 'NewActive2',
+                last_name : 'User2'
+            };
 
+            let dummyGroup = 112233;
 
-    it('should map irc nick to telegram username mention', () => {
-      const testMessage = 'Mention to new_chat_participant';
-      let spy = sinon.spy(tgBot, 'sendMessage');
-      newBridge.masterUserClient.emit('message', 'test_irc_user', testBridge.irc.channel, testMessage);
-      tgBot.sendMessage.should.have.been.calledWith(testBridge.telegram.group_id, `[IRC/test_irc_user] Mention to @new_chat_participant`);
-      spy.restore();
-    });
+            newBridge.tgBot.emit('message', {
+                chat: {
+                    id: dummyGroup
+                },
+                from: theUser,
+                text: testMessage
+            });
 
-    it('should map irc nick to telegram first_name mention', () => {
-      const testMessage = 'Mention to new_chat_participant';
-      let spy = sinon.spy(tgBot, 'sendMessage');
-      newBridge.irc2tgUserMapping.new_chat_participant.username = '';
-      newBridge.irc2tgUserMapping.new_chat_participant.first_name = 'New';
-      newBridge.irc2tgUserMapping.new_chat_participant.last_name = '';
-      newBridge.masterUserClient.emit('message', 'test_irc_user', testBridge.irc.channel, testMessage);
-      tgBot.sendMessage.should.have.been.calledWith(testBridge.telegram.group_id, `[IRC/test_irc_user] Mention to New`);
-      spy.restore();
-    });
-
-    it('should map irc nick to telegram last_name mention', () => {
-      const testMessage = 'Mention to new_chat_participant';
-      let spy = sinon.spy(tgBot, 'sendMessage');
-      newBridge.irc2tgUserMapping.new_chat_participant.username = '';
-      newBridge.irc2tgUserMapping.new_chat_participant.first_name = '';
-      newBridge.irc2tgUserMapping.new_chat_participant.last_name = 'User';
-      newBridge.masterUserClient.emit('message', 'test_irc_user', testBridge.irc.channel, testMessage);
-      tgBot.sendMessage.should.have.been.calledWith(testBridge.telegram.group_id, `[IRC/test_irc_user] Mention to User`);
-      spy.restore();
-    });
-
-    it('should remove an irc user when telegram user has left group', () => {
-        const leftUserMsg = {
-            chat: {
-                id: testBridge.telegram.group_id
-            },
-            left_chat_participant: {
-                id: 777,
-                username: 'left_chat_participant',
-                first_name: 'left',
-                last_name: 'participant'
-            }
-        };
-
-        newBridge.tgBot.emit('left_chat_participant', leftUserMsg);
-
-        newBridge.ircConnections.should.not.have.property(leftUserMsg.left_chat_participant.id);
-    });
-
-    it('should add an irc user non-prefixed', () => {
-        const userData = {
-          id: 888,
-          username : 'newUser',
-          first_name : 'New',
-          last_name : 'User'
-        };
-
-        newBridge.addUser(userData);
-
-        newBridge.ircConnections[userData.id].on('registered', (data) => {
-            data.args[0].should.equal(userData.username);
+            newBridge.ircConnections.should.not.have.property(112233);
         });
 
-        newBridge.ircConnections[userData.id].should.be.instanceOf(mockIrc.Client);
-        newBridge.removeUser(888);
+        it('should remove an irc user when telegram user has left group', () => {
+            const leftUserMsg = {
+                chat: {
+                    id: testBridge.telegram.group_id
+                },
+                left_chat_participant: {
+                    id: 778,
+                    username: 'left_chat_participant',
+                    first_name: 'left',
+                    last_name: 'participant'
+                }
+            };
+
+            newBridge.tgBot.emit('left_chat_participant', leftUserMsg);
+
+            newBridge.ircConnections.should.not.have.property(leftUserMsg.left_chat_participant.id);
+        });
+
+        it('should add an irc user non-prefixed', () => {
+            const userData = {
+                id: 888,
+                username : 'newUser',
+                first_name : 'New',
+                last_name : 'User'
+            };
+
+            newBridge.addUser(userData);
+
+            newBridge.ircConnections[userData.id].on('registered', (data) => {
+                data.args[0].should.equal(userData.username);
+            });
+
+            newBridge.ircConnections[userData.id].should.be.instanceOf(mockIrc.Client);
+            newBridge.removeUser(888);
+        });
+
+        it('should add an irc user prefixed', () => {
+            const userData = {
+                id: 888,
+                username : 'newUser',
+                first_name : 'New',
+                last_name : 'User'
+            };
+
+            newBridge.config.irc.nick_prefix = 'pre_';
+
+            newBridge.addUser(userData);
+            newBridge.ircConnections[userData.id].should.be.instanceOf(mockIrc.Client);
+            newBridge.ircConnections[userData.id].nick.should.equal(newBridge.config.irc.nick_prefix + userData.username);
+
+            newBridge.config.irc.nick_prefix = '';
+            newBridge.removeUser(888);
+        });
+
+        it('should add an irc user suffixed', () => {
+            const userData = {
+                id: 888,
+                username : 'newUser',
+                first_name : 'New',
+                last_name : 'User'
+            };
+
+            newBridge.config.irc.nick_suffix = '_suf';
+
+            newBridge.addUser(userData);
+            newBridge.ircConnections[userData.id].should.be.instanceOf(mockIrc.Client);
+            newBridge.ircConnections[userData.id].nick.should.equal(userData.username + newBridge.config.irc.nick_suffix);
+
+            newBridge.config.irc.nick_suffix = '';
+            newBridge.removeUser(888);
+        });
+
+        it('should ignore user if in config.ignored_users', () => {
+            const userData = {
+                id: 222,
+                username : 'ignoredUser',
+                first_name : 'Ignored',
+                last_name : 'User'
+            };
+
+            newBridge.addUser(userData);
+
+            newBridge.ircConnections.should.have.not.property(userData.id);
+        });
     });
 
-    it('should add an irc user prefixed', () => {
-        const userData = {
-          id: 888,
-          username : 'newUser',
-          first_name : 'New',
-          last_name : 'User'
-        };
 
-        newBridge.config.irc.nick_prefix = 'pre_';
+    describe('#messages forwarding', () => {
+        it('should forward irc to telegram message', () => {
+            const testMessage = 'Test forward message';
+            let spy = sinon.spy(tgBot, 'sendMessage');
+            newBridge.masterUserClient.emit('message', 'test_irc_user', testBridge.irc.channel, testMessage);
+            tgBot.sendMessage.should.have.been.calledWith(testBridge.telegram.group_id, `[IRC/test_irc_user] ${testMessage}`);
+            spy.restore();
+        });
 
-        newBridge.addUser(userData);
-        newBridge.ircConnections[userData.id].should.be.instanceOf(mockIrc.Client);
-        newBridge.ircConnections[userData.id].nick.should.equal(newBridge.config.irc.nick_prefix + userData.username);
+        it('should forward telegram to irc message', () => {
+            const testMessage = 'Test forward message';
+            let spy = sinon.spy(newBridge.ircConnections[newUserMsg.new_chat_participant.id], 'say');
 
-        newBridge.config.irc.nick_prefix = '';
-        newBridge.removeUser(888);
+            newBridge.tgBot.emit('message', {
+                chat: {
+                    id: testBridge.telegram.group_id
+                },
+                from: {
+                    id: 777
+                },
+                text: testMessage
+            });
+
+            newBridge.ircConnections[newUserMsg.new_chat_participant.id].say.should.have.been.calledWith(testBridge.irc.channel, testMessage);
+            spy.restore();
+        });
     });
 
-    it('should add an irc user suffixed', () => {
-        const userData = {
-          id: 888,
-          username : 'newUser',
-          first_name : 'New',
-          last_name : 'User'
-        };
+    describe('#user mentions', () => {
+        it('should map irc nick to telegram username mention', () => {
+            const testMessage = 'Mention to new_chat_participant';
+            let spy = sinon.spy(tgBot, 'sendMessage');
+            newBridge.masterUserClient.emit('message', 'test_irc_user', testBridge.irc.channel, testMessage);
+            tgBot.sendMessage.should.have.been.calledWith(testBridge.telegram.group_id, `[IRC/test_irc_user] Mention to @new_chat_participant`);
+            spy.restore();
+        });
 
-        newBridge.config.irc.nick_suffix = '_suf';
+        it('should map irc nick to telegram first_name mention', () => {
+            const testMessage = 'Mention to new_chat_participant';
+            let spy = sinon.spy(tgBot, 'sendMessage');
+            newBridge.irc2tgUserMapping.new_chat_participant.username = '';
+            newBridge.irc2tgUserMapping.new_chat_participant.first_name = 'New';
+            newBridge.irc2tgUserMapping.new_chat_participant.last_name = '';
+            newBridge.masterUserClient.emit('message', 'test_irc_user', testBridge.irc.channel, testMessage);
+            tgBot.sendMessage.should.have.been.calledWith(testBridge.telegram.group_id, `[IRC/test_irc_user] Mention to New`);
+            spy.restore();
+        });
 
-        newBridge.addUser(userData);
-        newBridge.ircConnections[userData.id].should.be.instanceOf(mockIrc.Client);
-        newBridge.ircConnections[userData.id].nick.should.equal(userData.username + newBridge.config.irc.nick_suffix);
-
-        newBridge.config.irc.nick_suffix = '';
-        newBridge.removeUser(888);
+        it('should map irc nick to telegram last_name mention', () => {
+            const testMessage = 'Mention to new_chat_participant';
+            let spy = sinon.spy(tgBot, 'sendMessage');
+            newBridge.irc2tgUserMapping.new_chat_participant.username = '';
+            newBridge.irc2tgUserMapping.new_chat_participant.first_name = '';
+            newBridge.irc2tgUserMapping.new_chat_participant.last_name = 'User';
+            newBridge.masterUserClient.emit('message', 'test_irc_user', testBridge.irc.channel, testMessage);
+            tgBot.sendMessage.should.have.been.calledWith(testBridge.telegram.group_id, `[IRC/test_irc_user] Mention to User`);
+            spy.restore();
+        });
     });
 
-    it('should ignore user if in config.ignored_users', () => {
-        const userData = {
-          id: 222,
-          username : 'ignoredUser',
-          first_name : 'Ignored',
-          last_name : 'User'
-        };
+    describe('#join/parts', () => {
+        it('should forward a join message to telegram', () => {
+            let spy = sinon.spy(tgBot, 'sendMessage');
+            newBridge.irc2tgUserMapping.new_chat_participant.username = '';
+            newBridge.irc2tgUserMapping.new_chat_participant.first_name = '';
+            newBridge.irc2tgUserMapping.new_chat_participant.last_name = 'User';
+            newBridge.masterUserClient.emit('join', testBridge.irc.channel, 'test_irc_user', '');
+            tgBot.sendMessage.should.have.been.calledWith(testBridge.telegram.group_id, `[IRC/test_irc_user * joined to the channel *]`);
+            spy.restore();
+        });
 
-        newBridge.addUser(userData);
+        it('should not forward a join message to telegram if own username', () => {
+            let spy = sinon.spy(tgBot, 'sendMessage');
+            newBridge.irc2tgUserMapping.new_chat_participant.username = '';
+            newBridge.irc2tgUserMapping.new_chat_participant.first_name = '';
+            newBridge.irc2tgUserMapping.new_chat_participant.last_name = 'User';
+            newBridge.masterUserClient.emit('join', testBridge.irc.channel, newUserMsg.new_chat_participant.username, '');
+            sinon.assert.notCalled(tgBot.sendMessage);
+            spy.restore();
+        });
 
-        newBridge.ircConnections.should.have.not.property(userData.id);
+        it('should forward a part message to telegram', () => {
+            let spy = sinon.spy(tgBot, 'sendMessage');
+            newBridge.irc2tgUserMapping.new_chat_participant.username = '';
+            newBridge.irc2tgUserMapping.new_chat_participant.first_name = '';
+            newBridge.irc2tgUserMapping.new_chat_participant.last_name = 'User';
+            newBridge.masterUserClient.emit('part', testBridge.irc.channel, 'test_irc_user', '');
+            tgBot.sendMessage.should.have.been.calledWith(testBridge.telegram.group_id, `[IRC/test_irc_user * left the channel *]`);
+            spy.restore();
+        });
+
+        it('should not forward a part message to telegram if own username', () => {
+            let spy = sinon.spy(tgBot, 'sendMessage');
+            newBridge.irc2tgUserMapping.new_chat_participant.username = '';
+            newBridge.irc2tgUserMapping.new_chat_participant.first_name = '';
+            newBridge.irc2tgUserMapping.new_chat_participant.last_name = 'User';
+            newBridge.masterUserClient.emit('part', testBridge.irc.channel, newUserMsg.new_chat_participant.username, '');
+            sinon.assert.notCalled(tgBot.sendMessage);
+            spy.restore();
+        });
     });
 });
