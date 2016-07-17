@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "./node_modules/.bin/babel-node node_modules/.bin/babel-istanbul cover node_modules/.bin/_mocha -- --compilers js:babel-register",
-    "coveralls": "cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage",
+    "coveralls": "cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js",
     "build": "babel src/ -d build --copy-files",
     "start": "cd build/ && node index.js",
     "info": "cd build/ && node info.js"
@@ -27,6 +27,7 @@
   "homepage": "https://github.com/zephrax/ircgram#readme",
   "dependencies": {
     "chai-as-promised": "^5.3.0",
+    "debug": "^2.2.0",
     "irc": "^0.5.0",
     "node-telegram-bot-api": "^0.23.3"
   },

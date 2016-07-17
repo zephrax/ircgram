@@ -2,9 +2,13 @@
 
 import fs from 'fs';
 import User from './user';
+import debugLib from 'debug';
 
-/* istanbul ignore next */
-const _DEBUG_ = process.env.DEBUG || false;
+const debug = {
+    irc : debugLib('irc'),
+    telegram : debugLib('telegram'),
+    bridge : debugLib('bridge'),
+};
 
 class Bridge {
 
@@ -33,14 +37,11 @@ class Bridge {
         });
 
         this.masterUserClient.addListener('message', (from, to, message) => {
-            /* istanbul ignore next */
-            if (_DEBUG_) {
-                console.log(this.irc2tgUserMapping);
-                console.log(from + ' => ' + to + ': ' + message);
+            debug.irc(this.irc2tgUserMapping);
+            debug.irc(from + ' => ' + to + ': ' + message);
 
-                console.log(this.ircOwnUsernames);
-                console.log(from);
-            }
+            debug.irc(this.ircOwnUsernames);
+            debug.irc(from);
 
             if (to === this.config.irc.channel && this.ircOwnUsernames.indexOf(from) === -1) {
                 let userNames = Object.keys(this.irc2tgUserMapping);
@@ -61,9 +62,7 @@ class Bridge {
 
         /* istanbul ignore next */
         this.masterUserClient.addListener('error', (message) => {
-            if (_DEBUG_) {
-                console.log('error: ', message);
-            }
+            debug.irc('error: ', message);
         });
 
         this.ircOwnUsernames = [this.config.irc.master_nick];
@@ -77,12 +76,9 @@ class Bridge {
         let user = new User(userData);
         this.usersCount++;
 
-        /* istanbul ignore next */
-        if (_DEBUG_) {
-            console.log('-- ADD USER --');
-            console.log(user);
-            console.log('-- ADD USER --');
-        }
+        debug.bridge('-- ADD USER --');
+        debug.bridge(user);
+        debug.bridge('-- ADD USER --');
 
         let userNick = this.config.irc.nick_prefix ? this.config.irc.nick_prefix : '';
         userNick += user.irc_nick + (this.config.irc.nick_suffix ? this.config.irc.nick_suffix : '');
@@ -110,12 +106,9 @@ class Bridge {
 
         /* istanbul ignore next */
         this.ircConnections[userData.id].addListener('error', (message) => {
-            if (_DEBUG_) {
-                console.log('error: ', message);
-            }
+            debug.irc('error: ', message);
         });
 
-        //this.ircConnections[userData.id] = thisUserClient;
         this.ircConnections[userData.id].connect();
     }
 
@@ -128,15 +121,11 @@ class Bridge {
         this.tgBot.on('message', (msg) => {
             let chatId = msg.chat.id;
 
-            /* istanbul ignore next */
             if (chatId != this.config.telegram.group_id) {
                 return false;
             }
 
-            /* istanbul ignore next */
-            if (_DEBUG_) {
-                console.log(msg);
-            }
+            debug.telegram(msg);
 
             if (!this.ircConnections[msg.from.id]) {
                 this.addUser(msg.from);
@@ -148,13 +137,10 @@ class Bridge {
         });
 
         this.tgBot.on('new_chat_participant', (msg) => {
-            /* istanbul ignore next */
-            if (_DEBUG_) {
-                console.log(msg);
-            }
+            debug.telegram(msg);
 
             let chatId = msg.chat.id;
-            /* istanbul ignore next */
+
             if (chatId != this.config.telegram.group_id) {
                 return;
             }
@@ -167,13 +153,10 @@ class Bridge {
         });
 
         this.tgBot.on('left_chat_participant', (msg) => {
-            /* istanbul ignore next */
-            if (_DEBUG_) {
-                console.log(msg);
-            }
+            debug.telegram(msg);
 
             let chatId = msg.chat.id;
-            /* istanbul ignore next */
+
             if (chatId != this.config.telegram.group_id) {
                 return;
             }
@@ -185,6 +168,7 @@ class Bridge {
     }
 
     updateUsersDb() {
+
         let result = Object.keys(this.irc2tgUserMapping).map((userKey) => {
             return {
                 id: this.irc2tgUserMapping[userKey].id,
@@ -195,10 +179,7 @@ class Bridge {
         });
 
         fs.writeFile(this.config.users_db, JSON.stringify(result, null, 2), (wrErr) => {
-            /* istanbul ignore next */
-            if (_DEBUG_) {
-                console.log(wrErr);
-            }
+            debug.bridge(wrErr);
         });
     }
 }

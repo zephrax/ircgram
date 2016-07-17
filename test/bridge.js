@@ -133,6 +133,28 @@ describe('IRCGram Bridge', () => {
         spy.restore();
     });
 
+    it('should not add an active telegram user from non-mapped group', () => {
+        const testMessage = 'Testing active user';
+        const theUser = {
+            id: 779,
+            username : 'newActiveUser2',
+            first_name: 'NewActive2',
+            last_name : 'User2'
+        };
+
+        let dummyGroup = 112233;
+
+        newBridge.tgBot.emit('message', {
+            chat: {
+                id: dummyGroup
+            },
+            from: theUser,
+            text: testMessage
+        });
+
+        newBridge.ircConnections.should.not.have.property(112233);
+    });
+
     it('should forward irc to telegram message', () => {
         const testMessage = 'Test forward message';
         let spy = sinon.spy(tgBot, 'sendMessage');
