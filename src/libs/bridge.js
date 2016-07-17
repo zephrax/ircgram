@@ -55,6 +55,22 @@ class Bridge {
             }
         });
 
+        this.masterUserClient.addListener('join', (channel, nick, message) => {
+            debug.irc(nick + ' JOIN ' + channel);
+
+            if (this.ircOwnUsernames.indexOf(nick) === -1) {
+                this.tgBot.sendMessage(this.config.telegram.group_id, `[IRC/${nick} * joined to the channel *]`);
+            }
+        });
+
+        this.masterUserClient.addListener('part', (channel, nick, message) => {
+            debug.irc(nick + ' PART ' + channel);
+
+            if (this.ircOwnUsernames.indexOf(nick) === -1) {
+                this.tgBot.sendMessage(this.config.telegram.group_id, `[IRC/${nick} * left the channel *]`);
+            }
+        });
+
         this.masterUserClient.addListener('registered', (data) => {
             const nick = data.args[0];
             this.config.irc.master_nick = nick;
