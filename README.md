@@ -1,3 +1,7 @@
+## DEPRECATED
+
+As exos wrote an enhancement replace of this application, I suggest you to try it: [IRCGram++](https://github.com/exos/ircgrampp)
+
 [![Build Status](https://travis-ci.org/zephrax/ircgram.svg?branch=master)](https://travis-ci.org/zephrax/ircgram)
 [![devDependency Status](https://david-dm.org/zephrax/ircgram/dev-status.svg)](https://david-dm.org/zephrax/ircgram#info=devDependencies)
 [![Dependency Status](https://david-dm.org/zephrax/ircgram.svg)](https://david-dm.org/zephrax/ircgram)
