@@ -1,6 +1,6 @@
 {
   "name": "ircgram",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "IRCGram is a IRC <-> Telegram Bridge",
   "main": "index.js",
   "scripts": {
